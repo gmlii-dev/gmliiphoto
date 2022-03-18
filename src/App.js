@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { API, Storage } from 'aws-amplify';
-import { Authenticator } from '@aws-amplify/ui-react';
+import { API, Storage, Logger } from 'aws-amplify';
+import { Authenticator} from '@aws-amplify/ui-react';
 import { listNotes } from './graphql/queries';
 import { createNote as createNoteMutation, deleteNote as deleteNoteMutation } from './graphql/mutations';
 import '@aws-amplify/ui-react/styles.css';
 
 const initialFormState = { name: '', description: '' }
+const logger = new Logger("gmlii_logger");
 
 function App() {
   const [notes, setNotes] = useState([]);
@@ -30,12 +31,15 @@ function App() {
   }
 
   async function createNote() {
-    if (!formData.image) return;
+    if (!formData.image){
+      logger.error("formdata image null");
+      return;
+    }
     if (!formData.name) {
-        formData.name = "";
+        formData.name = " ";
     }
     if (!formData.description) {
-      formData.description = "";
+      formData.description = " ";
     }
     await API.graphql({ query: createNoteMutation, variables: { input: formData } });
     if (formData.image) {
@@ -53,10 +57,19 @@ function App() {
   }
 
   async function onChange(e) {
-    if (!e.target.files[0]) return
+    if (!e.target.files[0]) {
+      logger.error(e.target.files[0], " did not exist");
+      return
+    }
     const file = e.target.files[0];
     setFormData({ ...formData, image: file.name });
-    await Storage.put(file.name, file);
+    try {
+      await Storage.put(file.name, file);
+      logger.debug(file.name, "stored to s3");
+    } catch (e) {
+      logger.error("Error uploading file ", e);
+      return
+    }
     fetchNotes();
   }
 
@@ -68,7 +81,6 @@ function App() {
           <input
             type="file"
             accept="image/png, image/jpeg"
-
             onChange={onChange}
           />
           <input
@@ -80,12 +92,11 @@ function App() {
             <div style={{marginBottom: 30}}>
               {
                 notes.map(note => (
-                    <div key={note.id || note.name}>
-                      <h2>{note.name}</h2>
+                    <div key={note.id}>
                       <p>{note.description}</p>
                       <button onClick={() => deleteNote(note)}>Delete Image</button>
                       {
-                        note.image && <img src={note.image} style={{width: 400}} />
+                        note.image && <img src={note.image} style={{width: 400}} alt={formData.description} />
                       }
                     </div>
                   ))
