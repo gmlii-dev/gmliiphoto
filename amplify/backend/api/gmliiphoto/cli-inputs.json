@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "serviceConfiguration": {
+    "apiName": "gmliiphoto",
+    "serviceName": "AppSync",
+    "gqlSchemaPath": "C:\\Users\\georg\\projects\\gmliiphoto\\amplify\\backend\\api\\gmliiphoto\\schema.graphql",
+    "defaultAuthType": {
+      "mode": "API_KEY",
+      "expirationTime": 7
+    }
+  }
+}
